@@ -61,7 +61,9 @@ public class FitnessPortalServer {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Stopping Fitness Portal Server...");
-            server.stop(1);
+            if (server != null) {
+                server.stop(1);
+            }
         }));
 
         return server;
