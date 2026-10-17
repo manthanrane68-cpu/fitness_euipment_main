@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Puppet-Provisioned Fitness Equipment Maintenance Portal - Enterprise grade incident intake, role-based repair triage, and operational analytics dashboard.">
+    <title>PulseFit | Fitness Equipment Maintenance Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dark-theme">
+    <!-- Background Animated Gradient Orbs -->
+    <div class="ambient-glow orb-1"></div>
+    <div class="ambient-glow orb-2"></div>
+    <div class="ambient-glow orb-3"></div>
+
+    <div class="app-layout">
+        <!-- Top Navigation Bar -->
+        <header class="app-header" id="appHeader">
+            <div class="header-brand">
+                <div class="brand-icon-wrapper">
+                    <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6.5 6.5h11M6.5 17.5h11M4 12h16M2 8v8a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2H4a2 2 0 00-2 2z"/>
+                    </svg>
+                    <span class="brand-pulse"></span>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">PULSE<span>FIT</span></h1>
+                    <span class="brand-subtitle">Equipment Maintenance Portal</span>
+                </div>
+            </div>
+
+            <!-- Role Selector & System Status Indicator -->
+            <div class="header-controls">
+                <div class="status-chip" id="systemStatusChip" title="Live Health Diagnostics">
+                    <span class="status-dot"></span>
+                    <span id="systemStatusText">System: Operational</span>
+                </div>
+
+                <div class="role-selector-container">
+                    <label for="currentRoleSelector" class="role-label">Active Role:</label>
+                    <div class="custom-select-wrapper">
+                        <select id="currentRoleSelector" class="role-select">
+                            <option value="STAFF" selected>Gym Floor Staff / Trainer</option>
+                            <option value="TECH">Maintenance Technician</option>
+                            <option value="ADMIN">Facility Operations Manager (Admin)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="btnOpenCreateModal">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Report Incident</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="main-content" id="mainContainer">
+            <!-- Executive KPI Analytics Grid -->
+            <section class="dashboard-section" id="kpiDashboardSection" aria-label="Executive KPI Overview">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Operational Health Dashboard</h2>
+                        <p class="section-desc">Real-time telemetry across cardio, strength, and functional equipment zones.</p>
+                    </div>
+                    <div class="dashboard-actions">
+                        <button class="btn btn-secondary btn-sm" id="btnRefreshData" title="Reload Records">
+                            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="M23 4v6h-6M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                        <button class="btn btn-ghost btn-sm" id="btnResetSeed" title="Reset Default Test Data">
+                            Reset Seed
+                        </button>
+                    </div>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card glass-panel" id="kpiTotal">
+                        <div class="kpi-icon-box blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-body">
+                            <span class="kpi-title">Tracked Incidents</span>
+                            <span class="kpi-value" id="kpiTotalValue">0</span>
+                        </div>
+                        <span class="kpi-badge neutral">Fleet Assets</span>
+                    </div>
+
+                    <div class="kpi-card glass-panel" id="kpiOpen">
+                        <div class="kpi-icon-box amber">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        <div class="kpi-body">
+                            <span class="kpi-title">Open & Triaged</span>
+                            <span class="kpi-value text-amber" id="kpiOpenValue">0</span>
+                        </div>
+                        <span class="kpi-badge amber">Awaiting Tech</span>
+                    </div>
+
+                    <div class="kpi-card glass-panel" id="kpiInProgress">
+                        <div class="kpi-icon-box purple">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-body">
+                            <span class="kpi-title">Active In Repair</span>
+                            <span class="kpi-value text-purple" id="kpiInProgressValue">0</span>
+                        </div>
+                        <span class="kpi-badge purple">On Bench</span>
+                    </div>
+
+                    <div class="kpi-card glass-panel" id="kpiCritical">
+                        <div class="kpi-icon-box red">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <div class="kpi-body">
+                            <span class="kpi-title">Critical Safety</span>
+                            <span class="kpi-value text-red" id="kpiCriticalValue">0</span>
+                        </div>
+                        <span class="kpi-badge red pulse">Urgent SLA</span>
+                    </div>
+
+                    <div class="kpi-card glass-panel" id="kpiCost">
+                        <div class="kpi-icon-box emerald">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path>
+                            </svg>
+                        </div>
+                        <div class="kpi-body">
+                            <span class="kpi-title">Maint. Spend</span>
+                            <span class="kpi-value text-emerald" id="kpiCostValue">$0.00</span>
+                        </div>
+                        <span class="kpi-badge emerald">YTD Budget</span>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown Strip -->
+                <div class="category-strip glass-panel" id="categoryDistributionStrip">
+                    <span class="strip-label">Fleet Category Distribution:</span>
+                    <div class="distribution-tags" id="categoryTagsContainer">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filter & Search Toolbar -->
+            <section class="toolbar-section glass-panel" id="filterToolbarSection">
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search by Ticket ID, Machine Name, or Issue keyword..." autocomplete="off">
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <label for="filterStatus">Status:</label>
+                        <select id="filterStatus" class="filter-select">
+                            <option value="ALL">All Statuses</option>
+                            <option value="Reported">Reported</option>
+                            <option value="Triaged">Triaged</option>
+                            <option value="In Repair">In Repair</option>
+                            <option value="Awaiting Parts">Awaiting Parts</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="filterPriority">Priority:</label>
+                        <select id="filterPriority" class="filter-select">
+                            <option value="ALL">All Priorities</option>
+                            <option value="Critical">Critical</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="filterZone">Gym Zone:</label>
+                        <select id="filterZone" class="filter-select">
+                            <option value="ALL">All Zones</option>
+                            <option value="Zone A - Cardio Deck">Zone A - Cardio Deck</option>
+                            <option value="Zone B - Strength Zone">Zone B - Strength Zone</option>
+                            <option value="Zone C - Functional Zone">Zone C - Functional Zone</option>
+                            <option value="Zone D - Recovery & Spin">Zone D - Recovery & Spin</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-ghost btn-sm" id="btnClearFilters">Clear Filters</button>
+                </div>
+            </section>
+
+            <!-- Records Data Table Section -->
+            <section class="records-section glass-panel" id="recordsSection">
+                <div class="table-meta-bar">
+                    <div class="records-count-info">
+                        Showing <span id="visibleRecordsCount">0</span> of <span id="totalRecordsCount">0</span> records
+                    </div>
+                    <div class="legend-pills">
+                        <span class="legend-pill"><span class="dot crit"></span> Critical</span>
+                        <span class="legend-pill"><span class="dot high"></span> High</span>
+                        <span class="legend-pill"><span class="dot med"></span> Medium</span>
+                        <span class="legend-pill"><span class="dot low"></span> Low</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table" id="maintenanceTable">
+                        <thead>
+                            <tr>
+                                <th>Ticket ID</th>
+                                <th>Equipment</th>
+                                <th>Zone & Category</th>
+                                <th>Issue Summary</th>
+                                <th>Priority</th>
+                                <th>Workflow Status</th>
+                                <th>Assigned Tech</th>
+                                <th>Cost ($)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state hidden" id="emptyStateContainer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    <h3>No maintenance records found</h3>
+                    <p>Try adjusting your search criteria or register a new equipment incident.</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Incident Intake Modal -->
+        <div class="modal-overlay hidden" id="createRecordModal">
+            <div class="modal-window glass-panel">
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <div class="modal-badge">New Incident</div>
+                        <h3 id="modalTitle">Report Equipment Malfunction</h3>
+                    </div>
+                    <button class="btn-close" id="btnCloseCreateModal">&times;</button>
+                </div>
+                <form id="recordForm" class="modal-form">
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="inputEquipmentId">Equipment ID *</label>
+                            <input type="text" id="inputEquipmentId" placeholder="e.g. TM-09 or CB-02" required>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="inputEquipmentName">Equipment Name *</label>
+                            <input type="text" id="inputEquipmentName" placeholder="e.g. LifeFitness Incline Bench" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="selectCategory">Category *</label>
+                            <select id="selectCategory" required>
+                                <option value="Cardio">Cardio</option>
+                                <option value="Strength">Strength</option>
+                                <option value="Free Weights">Free Weights</option>
+                                <option value="Functional">Functional</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="selectZone">Gym Zone *</label>
+                            <select id="selectZone" required>
+                                <option value="Zone A - Cardio Deck">Zone A - Cardio Deck</option>
+                                <option value="Zone B - Strength Zone">Zone B - Strength Zone</option>
+                                <option value="Zone C - Functional Zone">Zone C - Functional Zone</option>
+                                <option value="Zone D - Recovery & Spin">Zone D - Recovery & Spin</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="selectPriority">Priority Severity *</label>
+                            <select id="selectPriority" required>
+                                <option value="Low">Low - Cosmetic / Non-urgent</option>
+                                <option value="Medium" selected>Medium - Minor degraded use</option>
+                                <option value="High">High - Major fault / Out of order</option>
+                                <option value="Critical">Critical - Safety Hazard / Cable snap</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="inputReportedBy">Reported By *</label>
+                            <input type="text" id="inputReportedBy" placeholder="e.g. Marcus Vance (Trainer)" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputIssueDescription">Malfunction / Defect Description *</label>
+                        <textarea id="inputIssueDescription" rows="3" placeholder="Provide precise symptoms, sounds, error codes, or safety risks..." required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="inputEstimatedCost">Initial Estimated Cost ($)</label>
+                            <input type="number" id="inputEstimatedCost" step="0.01" min="0" placeholder="0.00" value="0.00">
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="inputTechnician">Assigned Technician</label>
+                            <input type="text" id="inputTechnician" placeholder="Unassigned or OEM Specialist">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-ghost" id="btnCancelCreate">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitRecord">Log Incident Ticket</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Detail & Status Workflow Drawer / Modal -->
+        <div class="modal-overlay hidden" id="detailModal">
+            <div class="modal-window glass-panel">
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <span class="modal-badge" id="detailTicketBadge">TKT-1001</span>
+                        <h3 id="detailEquipmentTitle">Equipment Details</h3>
+                    </div>
+                    <button class="btn-close" id="btnCloseDetailModal">&times;</button>
+                </div>
+                <div class="detail-body" id="detailBodyContent">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <span>PULSEFIT Maintenance Engine &bull; Puppet Provisioned DevOps Architecture</span>
+                <span class="footer-build">Build: v1.0.0-mvp &bull; CI/CD: Jenkins &bull; Target: Tomcat/Nginx</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
