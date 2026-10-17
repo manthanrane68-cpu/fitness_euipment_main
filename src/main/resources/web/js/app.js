@@ -165,6 +165,51 @@ function initEventListeners() {
 
     // Form Submit
     elements.recordForm.addEventListener('submit', handleRecordSubmit);
+
+    // 1-Click Equipment Fault Presets
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const preset = e.target.getAttribute('data-preset');
+            applyEquipmentPreset(preset);
+        });
+    });
+}
+
+function applyEquipmentPreset(preset) {
+    if (preset === 'treadmill') {
+        elements.inputEquipmentId.value = 'TM-08';
+        elements.inputEquipmentName.value = 'Matrix Commercial Treadmill T7xe';
+        elements.selectCategory.value = 'Cardio';
+        elements.selectZone.value = 'Zone A - Cardio Deck';
+        elements.selectPriority.value = 'High';
+        elements.inputIssueDescription.value = 'Running belt slips violently when exceeding 10 km/h; display shows motor error code E-04.';
+        elements.inputEstimatedCost.value = '175.00';
+    } else if (preset === 'cable') {
+        elements.inputEquipmentId.value = 'CB-05';
+        elements.inputEquipmentName.value = 'LifeFitness Cable Crossover Jungle';
+        elements.selectCategory.value = 'Strength';
+        elements.selectZone.value = 'Zone B - Strength Zone';
+        elements.selectPriority.value = 'Critical';
+        elements.inputIssueDescription.value = 'Upper steel cable sheath stripped; multiple strands frayed. Machine immediately locked out for safety.';
+        elements.inputEstimatedCost.value = '90.00';
+    } else if (preset === 'elliptical') {
+        elements.inputEquipmentId.value = 'EB-04';
+        elements.inputEquipmentName.value = 'Technogym Synchro Excite';
+        elements.selectCategory.value = 'Cardio';
+        elements.selectZone.value = 'Zone A - Cardio Deck';
+        elements.selectPriority.value = 'Medium';
+        elements.inputIssueDescription.value = 'Left pedal crank emits repetitive knocking noise during forward stride; magnetic brake sluggish.';
+        elements.inputEstimatedCost.value = '65.00';
+    } else if (preset === 'smith') {
+        elements.inputEquipmentId.value = 'SM-02';
+        elements.inputEquipmentName.value = 'Hammer Strength Olympic Smith Machine';
+        elements.selectCategory.value = 'Strength';
+        elements.selectZone.value = 'Zone B - Strength Zone';
+        elements.selectPriority.value = 'High';
+        elements.inputIssueDescription.value = 'Safety catch peg on right vertical guide rod is bent and fails to lock into bar catch notch.';
+        elements.inputEstimatedCost.value = '120.00';
+    }
+    showToast(`Loaded preset template: ${preset.toUpperCase()}`, 'info');
 }
 
 // ==========================================================================
