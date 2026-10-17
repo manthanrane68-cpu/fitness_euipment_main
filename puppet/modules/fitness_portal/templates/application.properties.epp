@@ -1,0 +1,11 @@
+# Puppet-Provisioned Application Configuration
+# Environment: <%= $environment %>
+# Version: <%= $version %>
+
+server.port=<%= $port %>
+portal.environment=<%= $environment %>
+portal.version=<%= $version %>
+portal.data.dir=data
+portal.log.dir=logs
+portal.jvm.max_memory=<%= $jvm_max_mem %>
+portal.security.cors.enabled=true

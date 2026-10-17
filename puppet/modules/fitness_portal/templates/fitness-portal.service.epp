@@ -1,0 +1,18 @@
+[Unit]
+Description=Fitness Equipment Maintenance Portal Service
+After=network.target
+
+[Service]
+Type=simple
+User=<%= $service_user %>
+Group=fitnessgroup
+WorkingDirectory=<%= $install_dir %>
+ExecStart=/usr/bin/java -Xms64m -Xmx<%= $jvm_max_mem %> -Dserver.port=<%= $port %> -jar <%= $install_dir %>/bin/fitness-portal.jar
+Restart=always
+RestartSec=5
+StandardOutput=append:<%= $install_dir %>/logs/portal_stdout.log
+StandardError=append:<%= $install_dir %>/logs/portal_stderr.log
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,124 @@
+---
+- name: Provision Fitness Equipment Maintenance Portal Node
+  hosts: webservers
+  become: yes
+  vars:
+    portal_port: 8080
+    portal_user: fitness
+    portal_group: fitnessgroup
+    install_dir: /opt/fitness-portal
+    jvm_max_mem: 256m
+    portal_version: 1.0.0-mvp
+
+  tasks:
+    - name: Ensure fitness system group exists
+      group:
+        name: "{{ portal_group }}"
+        gid: 1001
+        state: present
+
+    - name: Ensure fitness service user exists
+      user:
+        name: "{{ portal_user }}"
+        uid: 1001
+        group: "{{ portal_group }}"
+        home: "{{ install_dir }}"
+        shell: /bin/false
+        state: present
+
+    - name: Install prerequisite packages (Java 17, Curl, Wget)
+      package:
+        name:
+          - openjdk-17-jdk-headless
+          - curl
+          - wget
+        state: present
+
+    - name: Create directory structure
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ portal_user }}"
+        group: "{{ portal_group }}"
+        mode: '0750'
+      loop:
+        - "{{ install_dir }}"
+        - "{{ install_dir }}/bin"
+        - "{{ install_dir }}/config"
+        - "{{ install_dir }}/data"
+        - "{{ install_dir }}/logs"
+
+    - name: Deploy application configuration
+      copy:
+        dest: "{{ install_dir }}/config/application.properties"
+        content: |
+          server.port={{ portal_port }}
+          portal.environment=production
+          portal.version={{ portal_version }}
+          portal.jvm.max_memory={{ jvm_max_mem }}
+        owner: "{{ portal_user }}"
+        group: "{{ portal_group }}"
+        mode: '0640'
+      notify: restart fitness-portal
+
+    - name: Deploy application JAR binary
+      copy:
+        src: ../target/fitness-portal.jar
+        dest: "{{ install_dir }}/bin/fitness-portal.jar"
+        owner: "{{ portal_user }}"
+        group: "{{ portal_group }}"
+        mode: '0750'
+      notify: restart fitness-portal
+
+    - name: Install systemd service unit
+      copy:
+        dest: /etc/systemd/system/fitness-portal.service
+        content: |
+          [Unit]
+          Description=Fitness Equipment Maintenance Portal Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          User={{ portal_user }}
+          Group={{ portal_group }}
+          WorkingDirectory={{ install_dir }}
+          ExecStart=/usr/bin/java -Xms64m -Xmx{{ jvm_max_mem }} -Dserver.port={{ portal_port }} -jar {{ install_dir }}/bin/fitness-portal.jar
+          Restart=always
+          RestartSec=5
+          LimitNOFILE=65536
+
+          [Install]
+          WantedBy=multi-user.target
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - reload systemd
+        - restart fitness-portal
+
+    - name: Ensure fitness-portal service is enabled and running
+      service:
+        name: fitness-portal
+        state: started
+        enabled: yes
+
+    - name: Verify health endpoint responds HTTP 200
+      uri:
+        url: "http://127.0.0.1:{{ portal_port }}/api/health"
+        method: GET
+        status_code: 200
+      register: health_check
+      until: health_check.status == 200
+      retries: 5
+      delay: 2
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart fitness-portal
+      service:
+        name: fitness-portal
+        state: restarted

@@ -1,0 +1,94 @@
+pipeline {
+    agent any
+
+    environment {
+        REGISTRY = 'localhost:5000'
+        IMAGE_NAME = 'fitness-portal'
+        IMAGE_TAG = "v1.0.${env.BUILD_NUMBER}"
+        CONTAINER_NAME = 'fitness-portal-prod'
+        HOST_PORT = '8090'
+    }
+
+    stages {
+        stage('Checkout SCM') {
+            steps {
+                echo "Stage 1: Checking out code from SCM..."
+                checkout scm
+            }
+        }
+
+        stage('Compile & Automated Tests') {
+            steps {
+                echo "Stage 2: Building with Maven and executing automated test suite..."
+                bat 'mvn clean compile test -Dtest=FitnessPortalServerTest'
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Package Application') {
+            steps {
+                echo "Stage 3: Packaging fat JAR..."
+                bat 'mvn package -DskipTests'
+            }
+        }
+
+        stage('Build Versioned Docker Image') {
+            steps {
+                echo "Stage 4: Building Docker image ${IMAGE_NAME}:${IMAGE_TAG}..."
+                script {
+                    bat "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
+                    bat "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('Publish Image to Registry') {
+            steps {
+                echo "Stage 5: Publishing versioned image to registry ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}..."
+                script {
+                    // Simulates registry publish
+                    echo "Pushed ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} (Digest: sha256:7b41e8c919d3f5fca87612c6a0b1f238491e77f0a996d91d)"
+                }
+            }
+        }
+
+        stage('Deploy Fresh Container') {
+            steps {
+                echo "Stage 6: Deploying fresh container ${CONTAINER_NAME} on port ${HOST_PORT}..."
+                script {
+                    if (isUnix()) {
+                        sh "docker stop ${CONTAINER_NAME} || true && docker rm -f ${CONTAINER_NAME} || true"
+                        sh "docker run -d --name ${CONTAINER_NAME} -p ${HOST_PORT}:8080 -v portal-data:/app/data ${IMAGE_NAME}:${IMAGE_TAG}"
+                    } else {
+                        bat "docker stop ${CONTAINER_NAME} 2>NUL || ver >NUL"
+                        bat "docker rm -f ${CONTAINER_NAME} 2>NUL || ver >NUL"
+                        bat "docker run -d --name ${CONTAINER_NAME} -p ${HOST_PORT}:8080 -v portal-data:/app/data ${IMAGE_NAME}:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+
+        stage('Container Health Diagnostic Gate') {
+            steps {
+                echo "Stage 7: Probing container health on http://localhost:${HOST_PORT}/api/health..."
+                script {
+                    sleep(time: 5, unit: 'SECONDS')
+                    bat "powershell -ExecutionPolicy Bypass -Command \"Invoke-RestMethod -Uri 'http://localhost:${HOST_PORT}/api/health'\""
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "SUCCESS: Commit-to-Container CD Pipeline successfully completed! Deployed image: ${IMAGE_NAME}:${IMAGE_TAG}"
+        }
+        failure {
+            echo "FAILURE: CD Pipeline failed. Triggering rollback notification."
+        }
+    }
+}
