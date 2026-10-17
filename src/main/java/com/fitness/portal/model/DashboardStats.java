@@ -49,6 +49,7 @@ public class DashboardStats {
                 + "\"resolved\":" + resolved + ","
                 + "\"criticalCount\":" + criticalCount + ","
                 + "\"totalCost\":" + String.format(java.util.Locale.US, "%.2f", totalCost) + ","
+                + "\"telemetryExportFormat\":\"JSON_V1_STABLE\","
                 + "\"categoryBreakdown\":" + catJson.toString()
                 + "}";
     }
