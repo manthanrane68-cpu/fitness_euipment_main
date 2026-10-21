@@ -384,8 +384,8 @@ const html = `<!DOCTYPE html>
     <div>
         <div class="cover-stats-grid">
             <div class="stat-card">
-                <div class="stat-num">15</div>
-                <div class="stat-label">Tasks Verified</div>
+                <div class="stat-num">14</div>
+                <div class="stat-label">Tasks (2 – 15) Verified</div>
             </div>
             <div class="stat-card">
                 <div class="stat-num">100%</div>
@@ -456,7 +456,6 @@ const html = `<!DOCTYPE html>
 <p>This report documents the verification, implementation evidence, and terminal execution outputs for the <strong>Fitness Equipment Maintenance Portal</strong>. The system provides a unified digital operational platform for commercial fitness facilities to intake equipment defect reports, coordinate technician triage, monitor fleet downtime via an executive KPI dashboard, and execute automated deployment pipelines.</p>
 
 <ul class="toc-list">
-    <li class="toc-item"><span class="toc-task">Task 1</span><span class="toc-name">Project Charter & Feasibility Benchmark</span><span class="toc-badge">COMPLETE</span></li>
     <li class="toc-item"><span class="toc-task">Task 2</span><span class="toc-name">Problem Definition and Scope Analysis</span><span class="toc-badge">COMPLETE</span></li>
     <li class="toc-item"><span class="toc-task">Task 3</span><span class="toc-name">Agile Planning, User Stories & DevOps Workflow</span><span class="toc-badge">COMPLETE</span></li>
     <li class="toc-item"><span class="toc-task">Task 4</span><span class="toc-name">System Architecture, Requirements & Tech Setup</span><span class="toc-badge">COMPLETE</span></li>
@@ -478,50 +477,14 @@ const html = `<!DOCTYPE html>
     <h2>Live Running Application UI (Docker Container on Port 8080)</h2>
     <div class="image-card">
         <img src="${imgWebPortalWithData || imgWebPortalLive}" alt="Live Fitness Portal Dashboard">
-        <div class="image-caption">Figure 1.1: Live Application Interface — Real-time Executive KPI Dashboard, Incident Intake, and Equipment Breakdown Registry</div>
+        <div class="image-caption">Figure 2.1: Live Application Interface — Real-time Executive KPI Dashboard, Incident Intake, and Equipment Breakdown Registry</div>
     </div>
 </div>
 
 <div class="page-break"></div>
 
-<!-- TASK 1 -->
-<div class="avoid-break">
-    <h1 class="task-header">Task 1: Project Charter & Feasibility Benchmark <span class="task-status-pill">Verified</span></h1>
-    <div class="deliverable-box"><strong>Deliverables:</strong> Project Charter, Business Case, Feasibility Evaluation Matrix, Approved Milestone Roadmap.</div>
-    <p><strong>Executive Summary:</strong> The Project Charter formally authorizes the engineering and deployment of the <strong>Fitness Equipment Maintenance Portal</strong>. It establishes the organizational business case, cost-benefit analysis, stakeholder alignment, and feasibility benchmarks across technical, operational, and financial dimensions.</p>
-
-    <h3>Feasibility Evaluation Matrix</h3>
-    <table>
-        <tr>
-            <th style="width:25%;">Feasibility Dimension</th>
-            <th style="width:55%;">Evaluation & Technological Benchmarks</th>
-            <th style="width:20%; text-align: center;">Assessment</th>
-        </tr>
-        <tr>
-            <td><strong>Technical Feasibility</strong></td>
-            <td>Utilizes robust, enterprise LTS standards: Java 17 backend, Maven 3.9 build lifecycle, multi-stage Docker containerization, Jenkins declarative CI/CD, and idempotent Puppet/Ansible configuration management.</td>
-            <td style="color:#10b981; font-weight:700; text-align:center;">FEASIBLE (HIGH)</td>
-        </tr>
-        <tr>
-            <td><strong>Operational Feasibility</strong></td>
-            <td>Intuitive glassmorphism web UI enabling non-technical gym floor staff to submit incident tickets in &lt; 30 seconds from any desktop, tablet, or mobile browser without client installation.</td>
-            <td style="color:#10b981; font-weight:700; text-align:center;">FEASIBLE (READY)</td>
-        </tr>
-        <tr>
-            <td><strong>Economic / ROI Feasibility</strong></td>
-            <td>Reduces mean equipment repair turnaround time from 9.2 days to &lt; 48 hours. Proactive breakdown triage prevents motor burnouts and reduces external contractor replacement overhead by &gt; 40%.</td>
-            <td style="color:#10b981; font-weight:700; text-align:center;">HIGH POSITIVE ROI</td>
-        </tr>
-        <tr>
-            <td><strong>Schedule Feasibility</strong></td>
-            <td>Structured into a 4-phase, 15-task milestone roadmap executed across 2-week Agile sprints with automated quality gates and regression test checkpoints.</td>
-            <td style="color:#10b981; font-weight:700; text-align:center;">ON SCHEDULE</td>
-        </tr>
-    </table>
-</div>
-
 <!-- TASK 2 -->
-<div class="avoid-break" style="margin-top: 15px;">
+<div class="avoid-break">
     <h1 class="task-header">Task 2: Problem Definition and Scope <span class="task-status-pill">Verified</span></h1>
     <div class="deliverable-box"><strong>Deliverables:</strong> Problem statement, stakeholder list, objectives, constraints and approved MVP scope.</div>
     <p><strong>Problem Statement:</strong> Modern commercial fitness centers operate dozens of electro-mechanical machines (treadmills, cable stacks, ellipticals). Equipment downtime currently averages 9.2 days due to paper logbooks, verbal reporting, and missing spare parts. This results in direct member cancellations, physical liability risks, and uncontrolled repair expenditures.</p>
