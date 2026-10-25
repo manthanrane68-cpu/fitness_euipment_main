@@ -2,7 +2,9 @@ package com.fitness.portal.controller;
 
 import com.fitness.portal.model.DashboardStats;
 import com.fitness.portal.model.MaintenanceRecord;
+import com.fitness.portal.model.User;
 import com.fitness.portal.repository.RecordRepository;
+import com.fitness.portal.repository.UserRepository;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
@@ -18,13 +20,20 @@ import java.util.regex.Pattern;
 
 /**
  * Controller handling REST API calls under /api/*
+ * Includes equipment records, operational KPIs, and user authentication endpoints.
  */
 public class ApiController {
     private final RecordRepository repository;
+    private final UserRepository userRepository;
     private final long startTime = System.currentTimeMillis();
 
     public ApiController(RecordRepository repository) {
+        this(repository, new UserRepository());
+    }
+
+    public ApiController(RecordRepository repository, UserRepository userRepository) {
         this.repository = repository;
+        this.userRepository = userRepository;
     }
 
     public void handle(HttpExchange exchange) throws IOException {
@@ -45,7 +54,18 @@ public class ApiController {
                 handleDashboard(exchange);
             } else if (path.equals("/api/reset") && "POST".equalsIgnoreCase(method)) {
                 repository.reset();
+                userRepository.reset();
                 sendJsonResponse(exchange, 200, "{\"status\":\"ok\",\"message\":\"Database reset to initial seed\"}");
+            } else if (path.equals("/api/auth/login") && "POST".equalsIgnoreCase(method)) {
+                handleLogin(exchange);
+            } else if (path.equals("/api/auth/register") && "POST".equalsIgnoreCase(method)) {
+                handleRegister(exchange);
+            } else if (path.equals("/api/auth/me") && "GET".equalsIgnoreCase(method)) {
+                handleAuthMe(exchange, query);
+            } else if (path.equals("/api/auth/logout") && ("POST".equalsIgnoreCase(method) || "GET".equalsIgnoreCase(method))) {
+                handleLogout(exchange, query);
+            } else if (path.equals("/api/users") && "GET".equalsIgnoreCase(method)) {
+                handleListUsers(exchange);
             } else if (path.equals("/api/records")) {
                 if ("GET".equalsIgnoreCase(method)) {
                     handleListRecords(exchange, query);
@@ -86,7 +106,12 @@ public class ApiController {
                 + "\"version\":\"1.0.0-mvp\","
                 + "\"uptimeSeconds\":" + uptimeSeconds + ","
                 + "\"heapMemoryMb\":\"" + usedHeap + "MB / " + maxHeap + "MB\","
-                + "\"activeRecords\":" + repository.getAll().size()
+                + "\"activeRecords\":" + repository.getAll().size() + ","
+                + "\"registeredUsers\":" + userRepository.getAllUsers().size() + ","
+                + "\"databaseStatus\":{"
+                + "\"recordsDb\":\"data/maintenance_records.json [ONLINE]\","
+                + "\"usersDb\":\"data/users.json [ONLINE]\""
+                + "}"
                 + "}";
         sendJsonResponse(exchange, 200, json);
     }
@@ -94,6 +119,108 @@ public class ApiController {
     private void handleDashboard(HttpExchange exchange) throws IOException {
         DashboardStats stats = repository.getDashboardStats();
         sendJsonResponse(exchange, 200, stats.toJson());
+    }
+
+    private void handleLogin(HttpExchange exchange) throws IOException {
+        String body = readBody(exchange);
+        String username = extractString(body, "username");
+        String password = extractString(body, "password");
+
+        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            sendJsonResponse(exchange, 400, "{\"status\":\"error\",\"message\":\"Username and password are required\"}");
+            return;
+        }
+
+        UserRepository.AuthResult result = userRepository.authenticate(username, password);
+        if (result.isSuccess()) {
+            String json = "{"
+                    + "\"status\":\"success\","
+                    + "\"message\":\"Login successful\","
+                    + "\"token\":\"" + result.getToken() + "\","
+                    + "\"user\":" + result.getUser().toJson()
+                    + "}";
+            sendJsonResponse(exchange, 200, json);
+        } else {
+            sendJsonResponse(exchange, 401, "{\"status\":\"error\",\"message\":\"" + result.getMessage() + "\"}");
+        }
+    }
+
+    private void handleRegister(HttpExchange exchange) throws IOException {
+        String body = readBody(exchange);
+        String username = extractString(body, "username");
+        String password = extractString(body, "password");
+        String fullName = extractString(body, "fullName");
+        String email = extractString(body, "email");
+        String role = extractString(body, "role");
+
+        if (username == null || username.trim().length() < 3) {
+            sendJsonResponse(exchange, 400, "{\"status\":\"error\",\"message\":\"Username must be at least 3 characters\"}");
+            return;
+        }
+        if (password == null || password.trim().length() < 5) {
+            sendJsonResponse(exchange, 400, "{\"status\":\"error\",\"message\":\"Password must be at least 5 characters\"}");
+            return;
+        }
+
+        UserRepository.AuthResult result = userRepository.register(username, password, fullName, email, role);
+        if (result.isSuccess()) {
+            String json = "{"
+                    + "\"status\":\"success\","
+                    + "\"message\":\"User registered successfully\","
+                    + "\"token\":\"" + result.getToken() + "\","
+                    + "\"user\":" + result.getUser().toJson()
+                    + "}";
+            sendJsonResponse(exchange, 201, json);
+        } else {
+            sendJsonResponse(exchange, 400, "{\"status\":\"error\",\"message\":\"" + result.getMessage() + "\"}");
+        }
+    }
+
+    private void handleAuthMe(HttpExchange exchange, String query) throws IOException {
+        String token = extractAuthToken(exchange, query);
+        if (token == null) {
+            sendJsonResponse(exchange, 401, "{\"status\":\"error\",\"message\":\"No authorization token provided\"}");
+            return;
+        }
+
+        Optional<User> userOpt = userRepository.getUserByToken(token);
+        if (userOpt.isPresent()) {
+            String json = "{"
+                    + "\"status\":\"success\","
+                    + "\"user\":" + userOpt.get().toJson()
+                    + "}";
+            sendJsonResponse(exchange, 200, json);
+        } else {
+            sendJsonResponse(exchange, 401, "{\"status\":\"error\",\"message\":\"Invalid or expired session token\"}");
+        }
+    }
+
+    private void handleLogout(HttpExchange exchange, String query) throws IOException {
+        String token = extractAuthToken(exchange, query);
+        if (token != null) {
+            userRepository.invalidateToken(token);
+        }
+        sendJsonResponse(exchange, 200, "{\"status\":\"success\",\"message\":\"Successfully logged out\"}");
+    }
+
+    private void handleListUsers(HttpExchange exchange) throws IOException {
+        List<User> users = userRepository.getAllUsers();
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < users.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(users.get(i).toJson());
+        }
+        sb.append("]");
+        sendJsonResponse(exchange, 200, sb.toString());
+    }
+
+    private String extractAuthToken(HttpExchange exchange, String query) {
+        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+        if (authHeader != null && authHeader.toLowerCase().startsWith("bearer ")) {
+            return authHeader.substring(7).trim();
+        }
+        Map<String, String> params = parseQueryParams(query);
+        return params.get("token");
     }
 
     private void handleListRecords(HttpExchange exchange, String query) throws IOException {
@@ -182,9 +309,13 @@ public class ApiController {
     private void sendJsonResponse(HttpExchange exchange, int status, String json) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
         exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization");
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+        if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod())) {
+            exchange.sendResponseHeaders(status, -1);
+            return;
+        }
         exchange.sendResponseHeaders(status, bytes.length);
         try (OutputStream out = exchange.getResponseBody()) {
             out.write(bytes);
@@ -194,9 +325,13 @@ public class ApiController {
     private void sendResponse(HttpExchange exchange, int status, String text) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=UTF-8");
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
         exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization");
         byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+        if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod())) {
+            exchange.sendResponseHeaders(status, -1);
+            return;
+        }
         exchange.sendResponseHeaders(status, bytes.length);
         try (OutputStream out = exchange.getResponseBody()) {
             out.write(bytes);

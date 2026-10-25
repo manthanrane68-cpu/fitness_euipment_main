@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secure User Authentication & Access Portal - PulseFit Equipment Maintenance System.">
+    <title>PulseFit Portal | Secure Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dark-theme login-body">
+    <!-- Ambient Animated Gradient Orbs -->
+    <div class="ambient-glow orb-1"></div>
+    <div class="ambient-glow orb-2"></div>
+    <div class="ambient-glow orb-3"></div>
+
+    <div class="login-wrapper">
+        <!-- Floating Glassmorphic Authentication Card -->
+        <div class="login-card glass-panel" id="authCard">
+            <!-- Brand & Header -->
+            <div class="login-header">
+                <div class="brand-icon-wrapper large-brand-icon">
+                    <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6.5 6.5h11M6.5 17.5h11M4 12h16M2 8v8a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2H4a2 2 0 00-2 2z"/>
+                    </svg>
+                    <span class="brand-pulse"></span>
+                </div>
+                <h1 class="brand-title">PULSE<span>FIT</span></h1>
+                <p class="login-tagline">Equipment Maintenance &amp; Fleet Operations Portal</p>
+            </div>
+
+            <!-- Active User Banner (if already logged in) -->
+            <div id="alreadyLoggedInBanner" class="already-logged-in-box hidden">
+                <div class="user-session-info">
+                    <span class="avatar-circle" id="bannerAvatar">AD</span>
+                    <div>
+                        <div class="banner-welcome">Already authenticated as <strong id="bannerUserName">Admin</strong></div>
+                        <div class="banner-role" id="bannerUserRole">FACILITY ADMIN</div>
+                    </div>
+                </div>
+                <div class="banner-actions">
+                    <a href="index.html" class="btn btn-primary btn-sm" id="btnContinueDashboard">Continue to Dashboard &rarr;</a>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnBannerLogout">Sign Out</button>
+                </div>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="auth-tabs" id="authTabsNav">
+                <button type="button" class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('login')">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+                    </svg>
+                    Sign In
+                </button>
+                <button type="button" class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                        <circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/>
+                        <line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                    Register New User
+                </button>
+            </div>
+
+            <!-- Inline Alert Message Box -->
+            <div class="auth-alert hidden" id="authAlert" role="alert">
+                <div class="alert-icon" id="alertIcon"></div>
+                <span class="alert-message" id="alertMessage"></span>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- 1-Click Quick Demo Sign-In Bar                                 -->
+            <!-- ============================================================= -->
+            <div class="quick-demo-container" id="quickDemoContainer">
+                <div class="quick-demo-header">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>Instant Demo Access &bull; 1-Click Sign In:</span>
+                </div>
+                <div class="demo-accounts-list">
+                    <button type="button" class="demo-account-row admin" id="btnDemoAdmin" title="Click to log in as Facility Admin">
+                        <div class="demo-row-left">
+                            <span class="demo-badge-icon">👑</span>
+                            <div class="demo-text-group">
+                                <span class="demo-role-label">Facility Admin</span>
+                                <span class="demo-user-label">Elena Rostova</span>
+                            </div>
+                        </div>
+                        <div class="demo-row-right">
+                            <span class="demo-creds-tag">admin / admin123</span>
+                            <span class="demo-arrow-icon">&rarr;</span>
+                        </div>
+                    </button>
+
+                    <button type="button" class="demo-account-row tech" id="btnDemoTech" title="Click to log in as Maintenance Technician">
+                        <div class="demo-row-left">
+                            <span class="demo-badge-icon">🔧</span>
+                            <div class="demo-text-group">
+                                <span class="demo-role-label">Technician</span>
+                                <span class="demo-user-label">Dave Miller</span>
+                            </div>
+                        </div>
+                        <div class="demo-row-right">
+                            <span class="demo-creds-tag">technician / tech123</span>
+                            <span class="demo-arrow-icon">&rarr;</span>
+                        </div>
+                    </button>
+
+                    <button type="button" class="demo-account-row staff" id="btnDemoStaff" title="Click to log in as Gym Floor Staff">
+                        <div class="demo-row-left">
+                            <span class="demo-badge-icon">🏃</span>
+                            <div class="demo-text-group">
+                                <span class="demo-role-label">Staff / Trainer</span>
+                                <span class="demo-user-label">Marcus Vance</span>
+                            </div>
+                        </div>
+                        <div class="demo-row-right">
+                            <span class="demo-creds-tag">trainer / staff123</span>
+                            <span class="demo-arrow-icon">&rarr;</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- TAB 1: Sign In Form                                            -->
+            <!-- ============================================================= -->
+            <form id="loginForm" class="auth-form" onsubmit="handleLoginSubmit(event)" autocomplete="off">
+                <div class="form-group">
+                    <label for="loginUsername">Username or Portal ID</label>
+                    <div class="input-with-icon">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <input type="text" id="loginUsername" placeholder="e.g. admin or technician" required autofocus>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-with-aside">
+                        <label for="loginPassword">Password</label>
+                        <a href="javascript:void(0)" class="forgot-link" onclick="showHelpModal()">Need assistance?</a>
+                    </div>
+                    <div class="input-with-icon">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0110 0v4"/>
+                        </svg>
+                        <input type="password" id="loginPassword" placeholder="Enter secure password" required>
+                        <button type="button" class="password-toggle" id="btnToggleLoginPassword" onclick="togglePasswordVisibility('loginPassword', this)" title="Show/Hide Password">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="rememberMe" checked>
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">Keep me logged in on this browser</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSubmitLogin">
+                    <span class="btn-text">Authenticate &amp; Enter Portal</span>
+                    <span class="btn-spinner hidden" id="loginSpinner"></span>
+                </button>
+            </form>
+
+            <!-- ============================================================= -->
+            <!-- TAB 2: Register Form                                           -->
+            <!-- ============================================================= -->
+            <form id="registerForm" class="auth-form hidden" onsubmit="handleRegisterSubmit(event)" autocomplete="off">
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label for="regFullName">Full Name *</label>
+                        <div class="input-with-icon">
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <input type="text" id="regFullName" placeholder="e.g. Sarah Jenkins" required>
+                        </div>
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="regUsername">Username *</label>
+                        <div class="input-with-icon">
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 16v-4"/>
+                                <path d="M12 8h.01"/>
+                            </svg>
+                            <input type="text" id="regUsername" placeholder="e.g. sjenkins" required minlength="3">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label for="regEmail">Work Email *</label>
+                        <div class="input-with-icon">
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                            <input type="email" id="regEmail" placeholder="sarah@pulsefit.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="regRole">Role Permissions *</label>
+                        <select id="regRole" class="auth-select" required>
+                            <option value="STAFF" selected>Staff / Floor Trainer</option>
+                            <option value="TECH">Maintenance Technician</option>
+                            <option value="ADMIN">Facility Operations Manager (Admin)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="regPassword">Password *</label>
+                    <div class="input-with-icon">
+                        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0110 0v4"/>
+                        </svg>
+                        <input type="password" id="regPassword" placeholder="Minimum 5 characters" required minlength="5" oninput="checkPasswordStrength(this.value)">
+                        <button type="button" class="password-toggle" id="btnToggleRegPassword" onclick="togglePasswordVisibility('regPassword', this)" title="Show/Hide Password">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Password strength indicator bar -->
+                    <div class="strength-bar-track">
+                        <div class="strength-bar" id="strengthBar"></div>
+                    </div>
+                    <span class="strength-hint" id="strengthHint">Security: Use 8+ chars with mix of letters & numbers</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSubmitRegister">
+                    <span class="btn-text">Register User into Database</span>
+                    <span class="btn-spinner hidden" id="registerSpinner"></span>
+                </button>
+            </form>
+
+            <!-- Card Footer -->
+            <div class="login-card-footer">
+                <div class="security-note">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span>SHA-256 Cryptographic Salted Hashing &bull; Role-Based Access Control</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal Dialog -->
+    <div class="modal-overlay hidden" id="helpModal">
+        <div class="modal-window glass-panel" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <div class="modal-badge">Portal Credentials</div>
+                    <h3>Default Accounts &amp; Database</h3>
+                </div>
+                <button class="btn-close" onclick="closeHelpModal()">&times;</button>
+            </div>
+            <div style="padding: 18px 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                <p>The PulseFit portal is provisioned with default accounts stored persistently in <code style="color:var(--accent-cyan); background:rgba(0,0,0,0.4); padding:2px 6px; border-radius:4px;">data/users.json</code>:</p>
+                <div style="margin: 14px 0; display:flex; flex-direction:column; gap:8px;">
+                    <div style="background:var(--bg-elevated); padding:10px 14px; border-radius:8px; border:1px solid var(--border-subtle);">
+                        <strong style="color:var(--accent-purple);">Admin:</strong> <code>admin</code> / <code>admin123</code> (Full system control)
+                    </div>
+                    <div style="background:var(--bg-elevated); padding:10px 14px; border-radius:8px; border:1px solid var(--border-subtle);">
+                        <strong style="color:var(--accent-cyan);">Technician:</strong> <code>technician</code> / <code>tech123</code> (Triaging &amp; repairs)
+                    </div>
+                    <div style="background:var(--bg-elevated); padding:10px 14px; border-radius:8px; border:1px solid var(--border-subtle);">
+                        <strong style="color:var(--accent-emerald);">Trainer/Staff:</strong> <code>trainer</code> / <code>staff123</code> (Reporting incidents)
+                    </div>
+                </div>
+                <p>You can also register a brand new account using the <strong>Register New User</strong> tab, which will immediately be saved to the database.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="closeHelpModal()">Understood</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State & Initialization
+        const API_BASE = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkExistingSession();
+            setupDemoButtons();
+        });
+
+        function checkExistingSession() {
+            const token = localStorage.getItem('pulsefit_token');
+            const userStr = localStorage.getItem('pulsefit_user');
+
+            if (token && userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    const banner = document.getElementById('alreadyLoggedInBanner');
+                    const userName = document.getElementById('bannerUserName');
+                    const userRole = document.getElementById('bannerUserRole');
+                    const avatar = document.getElementById('bannerAvatar');
+
+                    userName.textContent = user.fullName || user.username;
+                    userRole.textContent = (user.role || 'STAFF') + ' ACCESS ACTIVE';
+                    avatar.textContent = getInitials(user.fullName || user.username);
+                    avatar.className = 'avatar-circle role-' + (user.role ? user.role.toLowerCase() : 'staff');
+
+                    banner.classList.remove('hidden');
+
+                    document.getElementById('btnBannerLogout').addEventListener('click', handleLogout);
+                } catch (e) {
+                    localStorage.removeItem('pulsefit_token');
+                    localStorage.removeItem('pulsefit_user');
+                }
+            }
+        }
+
+        function getInitials(name) {
+            if (!name) return 'PF';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        function switchAuthTab(mode) {
+            const tabSignIn = document.getElementById('tabSignIn');
+            const tabRegister = document.getElementById('tabRegister');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const demoBar = document.getElementById('quickDemoContainer');
+
+            hideAlert();
+
+            if (mode === 'login') {
+                tabSignIn.classList.add('active');
+                tabRegister.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                demoBar.classList.remove('hidden');
+            } else {
+                tabRegister.classList.add('active');
+                tabSignIn.classList.remove('active');
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                demoBar.classList.add('hidden');
+            }
+        }
+
+        function setupDemoButtons() {
+            document.getElementById('btnDemoAdmin').addEventListener('click', () => {
+                quickLogin('admin', 'admin123');
+            });
+            document.getElementById('btnDemoTech').addEventListener('click', () => {
+                quickLogin('technician', 'tech123');
+            });
+            document.getElementById('btnDemoStaff').addEventListener('click', () => {
+                quickLogin('trainer', 'staff123');
+            });
+        }
+
+        function quickLogin(username, password) {
+            switchAuthTab('login');
+            document.getElementById('loginUsername').value = username;
+            document.getElementById('loginPassword').value = password;
+            showAlert('info', 'Authenticating demo credentials for ' + username + '...');
+            executeLogin(username, password);
+        }
+
+        async function handleLoginSubmit(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                showAlert('error', 'Please enter both username and password');
+                return;
+            }
+
+            executeLogin(username, password);
+        }
+
+        async function executeLogin(username, password) {
+            const btn = document.getElementById('btnSubmitLogin');
+            const spinner = document.getElementById('loginSpinner');
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+
+            try {
+                const response = await fetch(API_BASE + '/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    showAlert('success', 'Authentication successful! Redirecting to maintenance portal...');
+                    localStorage.setItem('pulsefit_token', data.token);
+                    localStorage.setItem('pulsefit_user', JSON.stringify(data.user));
+
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 600);
+                } else {
+                    showAlert('error', data.message || 'Invalid username or password. Please try again.');
+                }
+            } catch (err) {
+                console.error('Login request failed', err);
+                showAlert('error', 'Network error: Unable to reach portal authentication service.');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        }
+
+        async function handleRegisterSubmit(event) {
+            event.preventDefault();
+            const fullName = document.getElementById('regFullName').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const role = document.getElementById('regRole').value;
+            const password = document.getElementById('regPassword').value;
+
+            const btn = document.getElementById('btnSubmitRegister');
+            const spinner = document.getElementById('registerSpinner');
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+
+            try {
+                const response = await fetch(API_BASE + '/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName, username, email, role, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    showAlert('success', 'User ' + username + ' successfully saved to database! Redirecting...');
+                    localStorage.setItem('pulsefit_token', data.token);
+                    localStorage.setItem('pulsefit_user', JSON.stringify(data.user));
+
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 800);
+                } else {
+                    showAlert('error', data.message || 'Registration failed. Username may already exist.');
+                }
+            } catch (err) {
+                console.error('Registration failed', err);
+                showAlert('error', 'Network error: Failed to connect to server registration endpoint.');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        }
+
+        async function handleLogout() {
+            const token = localStorage.getItem('pulsefit_token');
+            if (token) {
+                try {
+                    await fetch(API_BASE + '/api/auth/logout', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                } catch (ignored) {}
+            }
+            localStorage.removeItem('pulsefit_token');
+            localStorage.removeItem('pulsefit_user');
+            document.getElementById('alreadyLoggedInBanner').classList.add('hidden');
+            showAlert('success', 'Logged out successfully. You may sign in again.');
+        }
+
+        function showAlert(type, message) {
+            const alertBox = document.getElementById('authAlert');
+            const alertMsg = document.getElementById('alertMessage');
+            const alertIcon = document.getElementById('alertIcon');
+
+            alertBox.className = 'auth-alert ' + type;
+            alertMsg.textContent = message;
+
+            if (type === 'error') {
+                alertIcon.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+            } else if (type === 'success') {
+                alertIcon.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+            } else {
+                alertIcon.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+            }
+
+            alertBox.classList.remove('hidden');
+        }
+
+        function hideAlert() {
+            document.getElementById('authAlert').classList.add('hidden');
+        }
+
+        function togglePasswordVisibility(fieldId, btn) {
+            const input = document.getElementById(fieldId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.classList.add('active');
+            } else {
+                input.type = 'password';
+                btn.classList.remove('active');
+            }
+        }
+
+        function checkPasswordStrength(val) {
+            const bar = document.getElementById('strengthBar');
+            const hint = document.getElementById('strengthHint');
+            if (!val) {
+                bar.style.width = '0%';
+                hint.textContent = 'Security: Use 8+ chars with mix of letters & numbers';
+                return;
+            }
+
+            let score = 0;
+            if (val.length >= 5) score += 25;
+            if (val.length >= 8) score += 25;
+            if (/[0-9]/.test(val)) score += 25;
+            if (/[^A-Za-z0-9]/.test(val)) score += 25;
+
+            bar.style.width = score + '%';
+            if (score <= 25) {
+                bar.style.background = 'var(--accent-red)';
+                hint.textContent = 'Weak password';
+            } else if (score <= 50) {
+                bar.style.background = 'var(--accent-amber)';
+                hint.textContent = 'Fair - add numbers or symbols';
+            } else if (score <= 75) {
+                bar.style.background = 'var(--accent-cyan)';
+                hint.textContent = 'Good password';
+            } else {
+                bar.style.background = 'var(--accent-emerald)';
+                hint.textContent = 'Strong password!';
+            }
+        }
+
+
+        function showHelpModal() {
+            document.getElementById('helpModal').classList.remove('hidden');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

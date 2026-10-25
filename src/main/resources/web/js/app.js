@@ -6,6 +6,7 @@
 // Application State
 const state = {
     records: [],
+    currentUser: null,
     activeRole: 'STAFF', // STAFF | TECH | ADMIN
     filters: {
         query: '',
@@ -18,9 +19,14 @@ const state = {
 
 // DOM Selectors
 const elements = {
-    // Header & Role
+    // Header & Role & Auth
     systemStatusText: document.getElementById('systemStatusText'),
     currentRoleSelector: document.getElementById('currentRoleSelector'),
+    headerUserProfile: document.getElementById('headerUserProfile'),
+    headerUserAvatar: document.getElementById('headerUserAvatar'),
+    headerUserName: document.getElementById('headerUserName'),
+    headerUserRoleBadge: document.getElementById('headerUserRoleBadge'),
+    btnHeaderSignout: document.getElementById('btnHeaderSignout'),
     btnOpenCreateModal: document.getElementById('btnOpenCreateModal'),
     btnRefreshData: document.getElementById('btnRefreshData'),
     btnResetSeed: document.getElementById('btnResetSeed'),
@@ -76,13 +82,105 @@ const elements = {
 // Initialization & Event Listeners
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    if (!checkAuthAndInitUser()) {
+        return;
+    }
     initEventListeners();
     loadDashboard();
     loadRecords();
     checkHealthDiagnostics();
 });
 
+function checkAuthAndInitUser() {
+    const token = localStorage.getItem('pulsefit_token');
+    const userStr = localStorage.getItem('pulsefit_user');
+
+    if (!token || !userStr) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('guest') === 'true') {
+            const guestUser = {
+                id: 'USR-1003',
+                username: 'trainer',
+                fullName: 'Marcus Vance (Floor Trainer)',
+                role: 'STAFF',
+                email: 'marcus.vance@pulsefit.com'
+            };
+            localStorage.setItem('pulsefit_token', 'demo-guest-token');
+            localStorage.setItem('pulsefit_user', JSON.stringify(guestUser));
+            applyUserSession(guestUser);
+            return true;
+        }
+        window.location.href = 'login.html';
+        return false;
+    }
+
+    try {
+        const user = JSON.parse(userStr);
+        applyUserSession(user);
+        return true;
+    } catch (e) {
+        localStorage.removeItem('pulsefit_token');
+        localStorage.removeItem('pulsefit_user');
+        window.location.href = 'login.html';
+        return false;
+    }
+}
+
+function applyUserSession(user) {
+    state.currentUser = user;
+    state.activeRole = user.role || 'STAFF';
+
+    if (elements.currentRoleSelector) {
+        elements.currentRoleSelector.value = state.activeRole;
+    }
+
+    if (elements.headerUserName) {
+        elements.headerUserName.textContent = user.fullName || user.username;
+    }
+    if (elements.headerUserRoleBadge) {
+        elements.headerUserRoleBadge.textContent = user.role || 'STAFF';
+        elements.headerUserRoleBadge.className = 'user-capsule-role role-' + (user.role ? user.role.toLowerCase() : 'staff');
+    }
+    if (elements.headerUserAvatar) {
+        elements.headerUserAvatar.textContent = getInitials(user.fullName || user.username);
+        elements.headerUserAvatar.className = 'user-avatar-circle role-' + (user.role ? user.role.toLowerCase() : 'staff');
+    }
+}
+
+function getInitials(name) {
+    if (!name) return 'PF';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
+async function handleSignout() {
+    const token = localStorage.getItem('pulsefit_token');
+    if (token) {
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+        } catch (ignored) {}
+    }
+    localStorage.removeItem('pulsefit_token');
+    localStorage.removeItem('pulsefit_user');
+    window.location.href = 'login.html';
+}
+
 function initEventListeners() {
+    // Header Signout
+    if (elements.btnHeaderSignout) {
+        elements.btnHeaderSignout.addEventListener('click', () => {
+            if (confirm('Sign out of PulseFit Maintenance Portal?')) {
+                handleSignout();
+            }
+        });
+    }
+
     // Role change
     elements.currentRoleSelector.addEventListener('change', (e) => {
         state.activeRole = e.target.value;
@@ -351,7 +449,7 @@ function renderDashboard(stats) {
     elements.kpiOpenValue.textContent = stats.openIssues;
     elements.kpiInProgressValue.textContent = stats.inProgress;
     elements.kpiCriticalValue.textContent = stats.criticalCount;
-    elements.kpiCostValue.textContent = `$${stats.totalCost.toFixed(2)}`;
+    elements.kpiCostValue.textContent = `₹${stats.totalCost.toFixed(2)}`;
 
     // Render Category Pills
     elements.categoryTagsContainer.innerHTML = '';
@@ -398,7 +496,7 @@ function renderRecords() {
                 </span>
             </td>
             <td>${escapeHtml(r.assignedTechnician || 'Unassigned')}</td>
-            <td style="font-family:var(--font-mono); font-weight:600;">$${(r.estimatedCost || 0).toFixed(2)}</td>
+            <td style="font-family:var(--font-mono); font-weight:600;">₹${(r.estimatedCost || 0).toFixed(2)}</td>
             <td>
                 <div class="table-actions">
                     <button class="action-btn" onclick="openDetailModal('${r.id}')" title="View / Triage Ticket">
@@ -421,7 +519,9 @@ function renderRecords() {
 function openCreateModal() {
     elements.recordForm.reset();
     elements.inputEstimatedCost.value = '0.00';
-    if (state.activeRole === 'STAFF') {
+    if (state.currentUser && state.currentUser.fullName) {
+        elements.inputReportedBy.value = state.currentUser.fullName;
+    } else if (state.activeRole === 'STAFF') {
         elements.inputReportedBy.value = 'Marcus Vance (Floor Trainer)';
     } else if (state.activeRole === 'TECH') {
         elements.inputReportedBy.value = 'Dave Miller (Technician)';
@@ -483,7 +583,7 @@ function openDetailModal(id) {
             </div>
             <div class="detail-item">
                 <span class="detail-label">Maintenance Spend</span>
-                <span class="detail-val text-emerald">$${(record.estimatedCost || 0).toFixed(2)}</span>
+                <span class="detail-val text-emerald">₹${(record.estimatedCost || 0).toFixed(2)}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Last Updated</span>
@@ -516,7 +616,7 @@ function openDetailModal(id) {
                     <textarea id="modalNotesInput" rows="2" placeholder="Record parts replaced, torque specs, recalibration notes...">${escapeHtml(record.resolutionNotes || '')}</textarea>
                 </div>
                 <div class="form-group">
-                    <label>Updated Maintenance Cost ($):</label>
+                    <label>Updated Maintenance Cost (₹):</label>
                     <input type="number" id="modalCostInput" step="0.01" value="${record.estimatedCost || 0}">
                 </div>
                 <button class="btn btn-primary" onclick="submitStatusTransition('${record.id}')" style="margin-top:6px;">

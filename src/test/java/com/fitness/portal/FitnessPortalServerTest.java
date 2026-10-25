@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -73,6 +74,16 @@ public class FitnessPortalServerTest {
             } else {
                 failedTests++;
                 appendXmlFail(reportXml, "testJourney4_KpiDashboardAndHealth", "AssertionError: Dashboard telemetry mismatch", 0.028);
+            }
+
+            // Journey 5: User Authentication & Database Persistence
+            totalTests++;
+            if (runTest("testJourney5_UserAuthAndDatabasePersistence", FitnessPortalServerTest::testJourney5_UserAuthAndDatabasePersistence)) {
+                passedTests++;
+                appendXmlPass(reportXml, "testJourney5_UserAuthAndDatabasePersistence", 0.035);
+            } else {
+                failedTests++;
+                appendXmlFail(reportXml, "testJourney5_UserAuthAndDatabasePersistence", "AssertionError: Auth & User DB persistence failed", 0.035);
             }
 
         } catch (Exception e) {
@@ -200,6 +211,73 @@ public class FitnessPortalServerTest {
         assertTrue(dashRes.body.contains("totalRecords"), "Dashboard must return totalRecords");
         assertTrue(dashRes.body.contains("openIssues"), "Dashboard must return openIssues");
         assertTrue(dashRes.body.contains("categoryBreakdown"), "Dashboard must return categoryBreakdown");
+    }
+
+    /**
+     * Journey 5: User Authentication, Session State & Database Persistence
+     */
+    private static void testJourney5_UserAuthAndDatabasePersistence() throws Exception {
+        // Reset database to ensure clean baseline for test journey
+        postHttp("http://localhost:" + TEST_PORT + "/api/reset", "");
+
+        // 1. Valid Admin Login
+        String adminLoginPayload = "{\"username\":\"admin\",\"password\":\"admin123\"}";
+        HttpResponse loginRes = postHttp("http://localhost:" + TEST_PORT + "/api/auth/login", adminLoginPayload);
+        assertTrue(loginRes.statusCode == 200, "Admin login must return 200 OK");
+        assertTrue(loginRes.body.contains("\"status\":\"success\""), "Admin login must be successful");
+        assertTrue(loginRes.body.contains("\"token\""), "Admin login response must include session token");
+        assertTrue(loginRes.body.contains("\"role\":\"ADMIN\""), "Admin user must have ADMIN role");
+
+        // 2. Invalid Password Rejection (401 Unauthorized)
+        String invalidLoginPayload = "{\"username\":\"admin\",\"password\":\"wrongpass999\"}";
+        HttpResponse invalidRes = postHttp("http://localhost:" + TEST_PORT + "/api/auth/login", invalidLoginPayload);
+        assertTrue(invalidRes.statusCode == 401, "Invalid password must be rejected with 401 Unauthorized");
+        assertTrue(invalidRes.body.contains("\"status\":\"error\""), "Invalid login response must indicate error");
+
+        // 3. User Registration into Database
+        String registerPayload = "{"
+                + "\"username\":\"alex.tech\","
+                + "\"password\":\"securepass123\","
+                + "\"fullName\":\"Alex Rivera (Senior Tech)\","
+                + "\"email\":\"alex@pulsefit.com\","
+                + "\"role\":\"TECH\""
+                + "}";
+        HttpResponse regRes = postHttp("http://localhost:" + TEST_PORT + "/api/auth/register", registerPayload);
+        assertTrue(regRes.statusCode == 201, "User registration must return 201 Created");
+        assertTrue(regRes.body.contains("\"status\":\"success\""), "Registration must succeed");
+        assertTrue(regRes.body.contains("alex.tech"), "Registration response must contain username");
+
+        // Extract token
+        String token = null;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"token\"\\s*:\\s*\"([^\"]*)\"").matcher(regRes.body);
+        if (m.find()) {
+            token = m.group(1);
+        }
+        assertTrue(token != null && !token.isEmpty(), "Registration must return active session token");
+
+        // 4. Token Profile Check (/api/auth/me)
+        HttpResponse meRes = getHttp("http://localhost:" + TEST_PORT + "/api/auth/me?token=" + token);
+        assertTrue(meRes.statusCode == 200, "Session token must validate successfully");
+        assertTrue(meRes.body.contains("Alex Rivera"), "User profile must return correct full name");
+
+        // 5. Database Disk Persistence Verification
+        Path usersDbPath = Paths.get("data/users.json");
+        assertTrue(Files.exists(usersDbPath), "Users database file 'data/users.json' must exist on disk");
+        String dbContent = Files.readString(usersDbPath, StandardCharsets.UTF_8);
+        assertTrue(dbContent.contains("alex.tech"), "Persistent database file must contain registered user 'alex.tech'");
+        assertTrue(dbContent.contains("passwordHash"), "Persistent database file must contain password hashes (never plaintext passwords)");
+
+        // 6. Static Login Web Page Delivery
+        HttpResponse pageRes = getHttp("http://localhost:" + TEST_PORT + "/login.html");
+        assertTrue(pageRes.statusCode == 200, "Server must serve login.html with 200 OK");
+        assertTrue(pageRes.body.contains("PulseFit Portal | Secure Login"), "Login page title must match");
+
+        // 7. Logout & Token Invalidation
+        HttpResponse logoutRes = postHttp("http://localhost:" + TEST_PORT + "/api/auth/logout?token=" + token, "");
+        assertTrue(logoutRes.statusCode == 200, "Logout must succeed with 200 OK");
+
+        HttpResponse postLogoutMe = getHttp("http://localhost:" + TEST_PORT + "/api/auth/me?token=" + token);
+        assertTrue(postLogoutMe.statusCode == 401, "Invalidated session token must return 401 Unauthorized");
     }
 
     // --------------------------------------------------------------------------

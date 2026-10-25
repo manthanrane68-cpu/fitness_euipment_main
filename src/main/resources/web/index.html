@@ -39,6 +39,7 @@
                     <span id="systemStatusText">System: Operational</span>
                 </div>
 
+                <!-- Active Role Selector -->
                 <div class="role-selector-container">
                     <label for="currentRoleSelector" class="role-label">Active Role:</label>
                     <div class="custom-select-wrapper">
@@ -48,6 +49,22 @@
                             <option value="ADMIN">Facility Operations Manager (Admin)</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- User Profile Capsule & Sign Out -->
+                <div class="user-profile-capsule" id="headerUserProfile">
+                    <span class="user-avatar-circle role-admin" id="headerUserAvatar">ER</span>
+                    <div class="user-capsule-meta">
+                        <span class="user-capsule-name" id="headerUserName">Elena Rostova</span>
+                        <span class="user-capsule-role role-admin" id="headerUserRoleBadge">ADMIN</span>
+                    </div>
+                    <button class="btn-signout" id="btnHeaderSignout" title="Sign out of portal">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
                 </div>
 
                 <button class="btn btn-primary" id="btnOpenCreateModal">
@@ -151,7 +168,7 @@
                         </div>
                         <div class="kpi-body">
                             <span class="kpi-title">Maint. Spend</span>
-                            <span class="kpi-value text-emerald" id="kpiCostValue">$0.00</span>
+                            <span class="kpi-value text-emerald" id="kpiCostValue">₹0.00</span>
                         </div>
                         <span class="kpi-badge emerald">YTD Budget</span>
                     </div>
@@ -241,7 +258,7 @@
                                 <th>Priority</th>
                                 <th>Workflow Status</th>
                                 <th>Assigned Tech</th>
-                                <th>Cost ($)</th>
+                                <th>Cost (₹)</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -335,7 +352,7 @@
 
                     <div class="form-row">
                         <div class="form-group col-6">
-                            <label for="inputEstimatedCost">Initial Estimated Cost ($)</label>
+                            <label for="inputEstimatedCost">Initial Estimated Cost (₹)</label>
                             <input type="number" id="inputEstimatedCost" step="0.01" min="0" placeholder="0.00" value="0.00">
                         </div>
                         <div class="form-group col-6">

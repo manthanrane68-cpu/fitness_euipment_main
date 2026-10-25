@@ -2,6 +2,7 @@ package com.fitness.portal;
 
 import com.fitness.portal.controller.ApiController;
 import com.fitness.portal.repository.RecordRepository;
+import com.fitness.portal.repository.UserRepository;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -30,7 +31,9 @@ public class FitnessPortalServer {
             System.out.println("  FITNESS EQUIPMENT MAINTENANCE PORTAL (DevOps MVP v1.0.0)");
             System.out.println("  Server successfully started on port: " + port);
             System.out.println("  Web UI:      http://localhost:" + port + "/");
+            System.out.println("  Login Page:  http://localhost:" + port + "/login.html");
             System.out.println("  Health API:  http://localhost:" + port + "/api/health");
+            System.out.println("  Auth API:    http://localhost:" + port + "/api/auth/login");
             System.out.println("  Records API: http://localhost:" + port + "/api/records");
             System.out.println("==================================================================");
         } catch (IOException e) {
@@ -46,7 +49,8 @@ public class FitnessPortalServer {
         }
 
         RecordRepository repository = new RecordRepository();
-        ApiController apiController = new ApiController(repository);
+        UserRepository userRepository = new UserRepository();
+        ApiController apiController = new ApiController(repository, userRepository);
 
         server = HttpServer.create(new InetSocketAddress(port), 0);
 
@@ -97,6 +101,8 @@ public class FitnessPortalServer {
             String path = exchange.getRequestURI().getPath();
             if (path == null || path.equals("/") || path.isEmpty()) {
                 path = "/index.html";
+            } else if (path.equals("/login")) {
+                path = "/login.html";
             }
 
             // Prevent path traversal
@@ -114,6 +120,10 @@ public class FitnessPortalServer {
             String contentType = determineContentType(path);
             exchange.getResponseHeaders().set("Content-Type", contentType);
             exchange.getResponseHeaders().set("Cache-Control", "no-cache, must-revalidate");
+            if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(200, -1);
+                return;
+            }
             exchange.sendResponseHeaders(200, content.length);
             try (OutputStream out = exchange.getResponseBody()) {
                 out.write(content);
@@ -121,15 +131,7 @@ public class FitnessPortalServer {
         }
 
         private byte[] loadAsset(String path) {
-            // First try classpath resource: /web/index.html etc.
-            String resourcePath = "/web" + path;
-            try (InputStream in = FitnessPortalServer.class.getResourceAsStream(resourcePath)) {
-                if (in != null) {
-                    return in.readAllBytes();
-                }
-            } catch (IOException ignored) {}
-
-            // Fallback to local files under src/main/resources/web or web
+            // Check workspace files first for immediate live reload
             Path[] potentialPaths = new Path[]{
                     Paths.get("src/main/resources/web", path),
                     Paths.get("target/classes/web", path),
@@ -143,6 +145,14 @@ public class FitnessPortalServer {
                     } catch (IOException ignored) {}
                 }
             }
+
+            // Fallback to classpath resource (e.g. when packaged in JAR and run standalone)
+            String resourcePath = "/web" + path;
+            try (InputStream in = FitnessPortalServer.class.getResourceAsStream(resourcePath)) {
+                if (in != null) {
+                    return in.readAllBytes();
+                }
+            } catch (IOException ignored) {}
 
             return null;
         }
