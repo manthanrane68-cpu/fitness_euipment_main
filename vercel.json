@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "outputDirectory": "src/main/resources/web",
+  "rewrites": [
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/api/records/:id", "destination": "/api/records?id=:id" },
+    { "source": "/api/auth/login", "destination": "/api/auth/login" },
+    { "source": "/api/auth/register", "destination": "/api/auth/register" },
+    { "source": "/api/auth/me", "destination": "/api/auth/me" },
+    { "source": "/api/auth/logout", "destination": "/api/auth/logout" },
+    { "source": "/api/users", "destination": "/api/users" },
+    { "source": "/api/health", "destination": "/api/health" }
+  ]
+}
